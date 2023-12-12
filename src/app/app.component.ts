@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 })
 export class AppComponent {
   apiData: any;
+  container: any;
   constructor(private http:AppService){}
   colHeaders = [
     "Name",
@@ -27,7 +28,8 @@ private hotInstance: any;
   }
 
   initializeHandsontable() {
-    const container:any = document.getElementById('your-handsontable-container');
+  this.container =null;
+   this.container = document.getElementById('your-handsontable-container');
     if(this.data.length>0){
     const hotSettings: Handsontable.GridSettings = {
       data: this.data,
@@ -44,7 +46,7 @@ private hotInstance: any;
       }
     };
 
-    this.hotInstance = new Handsontable(container, hotSettings);
+    this.hotInstance = new Handsontable(this.container, hotSettings);
     console.log(this.hotInstance.getData());
   }
   }
@@ -53,42 +55,51 @@ private hotInstance: any;
     console.log('Cell changes:', changes);
     if(changes){
       console.log(this.apiData[changes[0][0]]);
-      let putObj=this.apiData[changes[0][0]];
+      
+      let tempArray=this.hotInstance.getData();
+      console.log("temp",tempArray[changes[0][0]]);
       let columnData=changes[0][1];
       let columnName="";
+      let primCol="id"
       let newValue=changes[0][3];
       switch(columnData){
         case 0:
           columnName="id";
           break;
-        case 2:
+        case 1:
           columnName="name";
           break;
-        case 3:
+        case 2:
           columnName="username";
           break;
-        case 4:
+        case 3:
           columnName="email";
           break;
-        case 5:
+        case 4:
           columnName="phone";
           break;
-        case 6:
+        case 5:
           columnName="website";
           break;
-        case 7:
+        case 6:
           columnName="address.street";
           break;
-        case 8:
+        case 7:
           columnName="company.name";
           break;
         default:
           break;
     }
-    putObj[columnName]=newValue
+    let putObj:any={}
+    this.apiData.filter((obj)=>{
+      if(obj[primCol]==tempArray[changes[0][0]][0]){
+        obj[columnName]=newValue
+        putObj= obj;
+      }
+    });
+    console.log("put",putObj)
     this.http.putHttp(`https://jsonplaceholder.typicode.com/users/${putObj.id}`,putObj,success=>{
       console.log("updated");
-      this.initializeHandsontable();
     },err=>{})
   }
 }
